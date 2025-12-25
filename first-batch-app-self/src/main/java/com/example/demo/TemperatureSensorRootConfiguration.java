@@ -2,6 +2,7 @@ package com.example.demo;
 
 import javax.sql.DataSource;
 
+
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.support.DefaultBatchConfiguration;
@@ -9,6 +10,7 @@ import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
+import org.springframework.batch.item.xml.builder.StaxEventItemWriterBuilder;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.batch.BatchDataSourceScriptDatabaseInitializer;
@@ -108,14 +110,12 @@ public class TemperatureSensorRootConfiguration extends DefaultBatchConfiguratio
 	public Step aggregateSensorStep(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
 		
 		return new StepBuilder("aggregate-sensor", jobRepository)
-				.<DailySensorData, String>chunk(1, transactionManager)
+				.<DailySensorData, DailyAggregatedSensorData>chunk(1, transactionManager)
 				.reader(new FlatFileItemReaderBuilder<DailySensorData>().name("dailySensorDataReader").resource(rawDailyInputResource)
 						.lineMapper(new SensorDataTextMapper()).build())
 				.processor(new RawToAggregateSensorDataProcessor())
-				.writer(items -> {
-                    // TODO: persist or handle processed AggregateSensorData items
-					System.out.println(items);
-                })
+				.writer( new StaxEventItemWriterBuilder().name("dailyAggregatedSensorDataWriter").marshaller(DailyAggregatedSensorData.getMarshaller())
+						.resource(aggregatedDailyOutputXmlResource).overwriteOutput(true).rootTagName("data").build())
 				.build();
 		
 		

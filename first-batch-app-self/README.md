@@ -1,4 +1,6 @@
-java -jar build/libs/first-batch-app-self-0.0.1-SNAPSHOT.jar org.example.TemperatureSensorRootConfiguration temperatureSensorJob id=$(uuidgen)
+gradle clean buildJar
+
+java -jar build/libs/first-batch-app-self-0.0.1-SNAPSHOT.jar com.example.demo.TemperatureSensorRootConfiguration temperatureSensorJob id=$(uuidgen)
 
 
 
